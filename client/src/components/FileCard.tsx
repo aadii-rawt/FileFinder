@@ -1,55 +1,104 @@
-import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BiDotsVerticalRounded } from "react-icons/bi";
+import { FaEllipsisV } from "react-icons/fa";
+import { HiOutlineDotsVertical } from "react-icons/hi";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-interface FileType {
-  _id: string;
-  filename: string;
-  url: string;
-  type: string;
-  extractedText: string;
+interface Props {
+  file: {
+    _id: string;
+    filename: string;
+    url: string;
+    type: string;
+    geminiText: string;
+  };
+  onPreview: () => void;
+  onRename: (id: string) => void;
+  onDelete: (id: string) => void;
+  onDownload: (url: string, filename: string) => void;
 }
 
-const FileCard = ({ file, onPreview }: { file: FileType; onPreview: () => void }) => {
-  const [numPages, setNumPages] = useState<number | null>(null);
+const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const isImage = file.type.startsWith("image");
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-  };
+  // Close on outside click:
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div
-      className="bg-white shadow p-4 rounded-lg my-4 cursor-pointer"
-      onClick={onPreview}
-    >
-      <h2 className="font-semibold mb-2 truncate">{file.filename}</h2>
+    <div className="relative p-3 rounded-xl shadow-sm bg-white my-3">
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-sm font-medium truncate cursor-pointer" onClick={onPreview}>
+          {file.filename}
+        </div>
 
-      {file.type.startsWith("image") ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu((prev) => !prev);
+          }}
+          className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
+        >
+          <HiOutlineDotsVertical   size={18} />
+        </button>
+      </div>
+
+      {isImage ? (
         <img
           src={file.url}
           alt={file.filename}
-          className="w-full h-auto rounded"
+          className="w-full rounded cursor-pointer"
+          onClick={onPreview}
         />
-      ) : file.type === "application/pdf" ? (
-        <div className="w-full overflow-hidden rounded border">
-          <Document
-            file={file.url}
-            onLoadSuccess={handleLoadSuccess}
-            loading={<div className="text-sm text-gray-400">Loading PDF...</div>}
-          >
-            <Page
-              pageNumber={1}
-              width={250}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            />
-          </Document>
-        </div>
       ) : (
-        <p className="text-sm text-gray-400">Unsupported file</p>
+        <a href={file.url} target="_blank" className="text-blue-600 underline text-sm">
+          View File
+        </a>
+      )}
+
+      {showMenu && (
+        <div
+          ref={menuRef}
+          className="absolute right-2 top-10 bg-gray-50 rounded text-sm shadow w-40 z-10"
+        >
+          <button
+            onClick={() => {
+              onDownload(file.url, file.filename);
+              setShowMenu(false);
+            }}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+          >
+            Download
+          </button>
+          <button
+            onClick={() => {
+              onRename(file._id);
+              setShowMenu(false);
+            }}
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+          >
+            Rename
+          </button>
+          <button
+            onClick={() => {
+              onDelete(file._id);
+              setShowMenu(false);
+            }}
+            className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
+          >
+            Move to Trash
+          </button>
+        </div>
       )}
     </div>
   );

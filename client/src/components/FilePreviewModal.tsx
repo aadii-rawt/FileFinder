@@ -76,7 +76,7 @@ const handlePrint = async () => {
         <div className="fixed inset-0 bg-black/80 text-white z-50 flex justify-center items-center">
             <div className="relative w-full h-full bg-transparent  shadow-xl rounded overflow-hidden">
                 {/* Header */}
-                <div className="absolute top-0 left-0 w-full bg-transparent flex items-center justify-between px-10 py-5 z-10">
+                <div className="absolute top-0 left-0 w-full bg-black/30 flex items-center justify-between px-10 py-5 z-10">
                     <div className="flex items-center gap-5 ">
                         <button onClick={onClose} title="Close" className="cursor-pointer">
                             <RxCross2 size={25} />
