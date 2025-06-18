@@ -29,6 +29,8 @@ const Header: React.FC = () => {
     const [folderName, setFolderName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const folderInputRef = useRef<HTMLInputElement>(null);
+
     const navigate = useNavigate();
     const { setPreviewFile, setUploadQueue } = useAuthContext();
 
@@ -95,6 +97,47 @@ const Header: React.FC = () => {
         // Remove from queue
         setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
     };
+
+
+    const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        // Extract top folder name from first file path
+        const firstFile = files[0];
+        const fullPath = (firstFile as any).webkitRelativePath;
+        const topFolderName = fullPath.split("/")[0];
+
+        // 1️⃣ Create the folder first
+        const folderRes = await axios.post("/folders", {
+            name: topFolderName,
+            parent: folderId || null, // current folderId
+        });
+
+        const newFolderId = folderRes.data._id;
+        console.log("📂 Created folder:", topFolderName, "ID:", newFolderId);
+
+        // 2️⃣ Upload each file to that folder
+        for (const file of files) {
+            // Add to queue
+            setUploadQueue((prev: File[]) => [...prev, file]);
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("parent", newFolderId);
+
+            try {
+                await axios.post("/upload", formData);
+                console.log("✅ Uploaded file:", file.name);
+            } catch (err) {
+                console.error("Upload failed:", err);
+            }
+
+            // Remove from queue
+            setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
+        }
+    };
+
 
     const getFileIcon = (type: string) => {
         if (type.startsWith("image")) return fileTypeIcons["image"];
@@ -184,6 +227,23 @@ const Header: React.FC = () => {
                     hidden
                     onChange={handleFileUpload}
                 />
+
+                <button
+                    onClick={() => folderInputRef.current?.click()}
+                    className="bg-purple-600 text-white px-4 py-2 rounded"
+                >
+                    Upload Folder
+                </button>
+
+                <input
+                    type="file"
+                    ref={folderInputRef}
+                    hidden
+                    webkitdirectory="true"
+                    multiple
+                    onChange={handleFolderUpload}
+                />
+
             </div>
 
         </header>

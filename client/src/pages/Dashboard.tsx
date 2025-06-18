@@ -24,6 +24,7 @@ function Dashboard() {
   const [suggestions, setSuggestions] = useState<FileType[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const { previewFile, setPreviewFile, uploadQueue } = useAuthContext();
+ 
 
   useEffect(() => {
     setParentId(folderId || null); // when URL changes, update parentId
@@ -39,28 +40,6 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 rounded-tl-3xl">
       <main className="p-4">
-        {/* Show smart search results ONLY if files > 0 */}
-        {files.length > 0 && (
-          <>
-            <h2 className="text-lg font-semibold mb-4">
-              Search Results ({files.length})
-            </h2>
-            <Masonry
-              breakpointCols={breakpointColumnsObj}
-              className="my-masonry-grid"
-              columnClassName="my-masonry-grid_column"
-            >
-              {files.map((file) => (
-                <FileCard
-                  key={file._id}
-                  file={file}
-                  onPreview={() => setPreviewFile(file)}
-                />
-              ))}
-            </Masonry>
-          </>
-        )}
-
         {/* No results message */}
         {query.trim() && files.length === 0 && (
           <div className="text-center text-gray-600 mt-12">

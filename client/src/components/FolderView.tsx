@@ -7,6 +7,8 @@ import useAuthContext from "../context/userContext";
 import { FaFolder, FaEllipsisV } from "react-icons/fa";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { HiOutlineDotsVertical } from "react-icons/hi";
+import { IoIosMenu } from "react-icons/io";
+import { CiGrid41 } from "react-icons/ci";
 
 interface Folder {
   _id: string;
@@ -33,6 +35,8 @@ const FolderView = () => {
 
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const fetchData = async () => {
     const resFolders = await axios.get(`/folders`, {
@@ -77,10 +81,11 @@ const FolderView = () => {
 
   const handleDeleteFolder = async (id: string) => {
     if (confirm("Move folder to Trash?")) {
-      await axios.delete(`/folders/${id}`);
-      fetchData();
+      await axios.patch(`/folders/${id}/trash`);
+      fetchData(); // refresh
     }
   };
+
 
   // CLOSE CONTEXT MENU on outside click:
   useEffect(() => {
@@ -102,96 +107,92 @@ const FolderView = () => {
   return (
     <div className="p-4 bg-gray-100">
       {/* BREADCRUMB */}
-      <div className="mb-4 flex flex-wrap gap-2 text-xl items-center">
-        <button
-          onClick={() => navigate("/")}
-          className="cursor-pointer text-gray-600 hover:text-black"
-        >
-          My Drive
-        </button>
-        {breadcrumbs.map((f, idx) => (
-          <div key={f._id} className="flex items-center gap-1">
-            <span>
-              <MdKeyboardArrowRight size={23} />
-            </span>
-            <button
-              onClick={() => navigate(`/folder/${f._id}`)}
-              className={`cursor-pointer ${
-                idx === breadcrumbs.length - 1
+      <div className="flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap gap-2 text-xl items-center">
+
+          <button
+            onClick={() => navigate("/")}
+            className="cursor-pointer text-gray-600 hover:text-black"
+          >
+            My Drive
+          </button>
+          {breadcrumbs.map((f, idx) => (
+            <div key={f._id} className="flex items-center gap-1">
+              <span>
+                <MdKeyboardArrowRight size={23} />
+              </span>
+              <button
+                onClick={() => navigate(`/folder/${f._id}`)}
+                className={`cursor-pointer ${idx === breadcrumbs.length - 1
                   ? "text-black"
                   : "text-gray-600 hover:text-black"
-              }`}
-            >
-              {f.name}
-            </button>
-          </div>
-        ))}
+                  }`}
+              >
+                {f.name}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex border rounded-3xl overflow-hidden">
+          <button
+            onClick={() => setViewMode("list")}
+            className="border-r px-4 py-2 text-sm bg-white shadow"
+          >
+            <IoIosMenu size={24} />
+          </button>
+          <button
+            onClick={() => setViewMode("grid")}
+            className="rounded-r-xl px-4 py-2 rounded text-sm bg-white shadow"
+          >
+          <CiGrid41 size={24}/>
+          </button>
+        </div>
       </div>
 
       {/* Folders */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className={`mt-5 ${viewMode === "list" ? "divide-y rounded" : "grid grid-cols-2 md:grid-cols-4 gap-4  mb-4"}`}>
         {folders.map((f) => (
           <div
             key={f._id}
-            className="relative p-4 shadow bg-white rounded-xl flex justify-between items-center"
+            className={`flex items-center justify-between p-4 cursor-pointer ${viewMode === "list" ? "hover:bg-gray-50 border-t border-gray-300 last:border-none" : "shadow bg-white rounded-xl"
+              }`}
+            onClick={() => navigate(`/folder/${f._id}`)}
           >
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() => navigate(`/folder/${f._id}`)}
-            >
+            <div className="flex items-center gap-3">
               <FaFolder size={20} className="text-amber-300" />
               <span className="font-medium">{f.name}</span>
             </div>
-
-            <button
-              onClick={(e) => {
-                e.stopPropagation(); // don't trigger folder click
-                setActiveMenu((prev) => (prev === f._id ? null : f._id));
-              }}
-              className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
-            >
-              <HiOutlineDotsVertical  size={18} />
-            </button>
-
-            {activeMenu === f._id && (
-              <div
-                ref={menuRef}
-                className="absolute right-2 top-12 bg-gray-50 shadow rounded text-sm w-40 z-10"
-              >
-                <button
-                  onClick={() => {
-                    handleRenameFolder(f._id);
-                    setActiveMenu(null);
-                  }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
-                >
-                  Rename
-                </button>
-                <button
-                  onClick={() => {
-                    handleDeleteFolder(f._id);
-                    setActiveMenu(null);
-                  }}
-                  className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
-                >
-                  Move to Trash
-                </button>
-              </div>
-            )}
           </div>
         ))}
       </div>
 
       {/* Files */}
-      <Masonry
-        breakpointCols={{ default: 3, 1100: 3, 700: 2, 500: 1 }}
-        className="my-masonry-grid"
-        columnClassName="my-masonry-grid_column"
-      >
-        {files.map((f) => (
-          <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)} />
-        ))}
-      </Masonry>
+      {viewMode === "grid" ? (
+        <Masonry
+          breakpointCols={{ default: 3, 1100: 3, 700: 2, 500: 1 }}
+          className="my-masonry-grid"
+          columnClassName="my-masonry-grid_column"
+        >
+          {files.map((f) => (
+            <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)} />
+          ))}
+        </Masonry>
+      ) : (
+        <div className="divide-y border-t border-gray-300">
+          {files.map((f) => (
+            <div
+              key={f._id}
+              className="flex justify-between items-center p-4 hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPreviewFile(f)}>
+                <span className="font-medium">{f.filename}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
     </div>
   );
 };

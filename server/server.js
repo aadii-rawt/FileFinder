@@ -96,6 +96,71 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).json({ error: "Upload failed" });
   }
 });
+app.post("/upload-bulk", upload.array("files"), async (req, res) => {
+  try {
+    const uploadedFiles = [];
+
+    for (const file of req.files) {
+      const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: "auto",
+      });
+
+      let geminiDescription = "";
+
+      if (file.mimetype.startsWith("image")) {
+        try {
+          const base64Image = base64Img.base64Sync(file.path);
+          const base64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, "");
+
+          const geminiResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+              contents: [
+                {
+                  parts: [
+                    { text: "Describe this image clearly and concisely." },
+                    {
+                      inlineData: {
+                        mimeType: file.mimetype,
+                        data: base64,
+                      },
+                    },
+                  ],
+                },
+              ],
+            }
+          );
+
+          geminiDescription =
+            geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          console.log("🧠 Gemini:", file.originalname, " → ", geminiDescription);
+        } catch (err) {
+          console.error("Gemini error:", err.response?.data || err.message);
+        }
+      }
+
+      const newFile = new FileModel({
+        filename: file.originalname,
+        url: result.secure_url,
+        type: file.mimetype,
+        geminiText: geminiDescription,
+        parent: req.body.parent || null,
+        path: file.webkitRelativePath || "", // you can save folder path
+      });
+
+      await newFile.save();
+      uploadedFiles.push(newFile);
+
+      fs.unlinkSync(file.path);
+    }
+
+    res.status(200).json({ uploadedFiles });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Bulk upload failed" });
+  }
+});
+
 
 // 📂 Create Folder
 app.post("/folders", async (req, res) => {
@@ -116,7 +181,7 @@ app.post("/folders", async (req, res) => {
 app.get("/folders", async (req, res) => {
   try {
     const parent = req.query.parent || null;
-    const folders = await FolderModel.find({ parent }).sort({ createdAt: 1 });
+    const folders = await FolderModel.find({ parent, trashed : false }).sort({ createdAt: 1 });
     res.json(folders);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch folders" });
@@ -133,28 +198,18 @@ app.get("/folders/:id", async (req, res) => {
   }
 });
 
+
+// Move folder to trash:
 app.patch("/folders/:id/trash", async (req, res) => {
-  try {
-    const folder = await FolderModel.findById(req.params.id);
-    if (!folder) return res.status(404).json({ error: "Folder not found" });
-
-    folder.trashed = true;
-    folder.trashedAt = new Date();
-    await folder.save();
-
-    res.json({ success: true, message: "Folder moved to trash." });
-  } catch (err) {
-    console.error("Error moving folder to trash:", err);
-    res.status(500).json({ error: "Failed to move folder to trash." });
-  }
+    await FolderModel.findByIdAndUpdate(req.params.id, { trashed: true });
+    res.json({ success: true });
 });
-
 
 // 📄 Get Files by Parent
 app.get("/files", async (req, res) => {
   try {
     const parent = req.query.parent || null;
-    const files = await FileModel.find({ parent }).sort({ createdAt: -1 });
+    const files = await FileModel.find({ parent, trashed: false }).sort({ createdAt: -1 });
     res.json(files);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch files" });
@@ -163,7 +218,7 @@ app.get("/files", async (req, res) => {
 
 app.get("/files/all", async (req, res) => {
   try {
-    const files = await FileModel.find().sort({ createdAt: -1 });
+    const files = await FileModel.find({trashed : false}).sort({ createdAt: -1 });
     res.json(files);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch all files" });
@@ -171,19 +226,8 @@ app.get("/files/all", async (req, res) => {
 });
 
 app.patch("/files/:id/trash", async (req, res) => {
-  try {
-    const file = await FileModel.findById(req.params.id);
-    if (!file) return res.status(404).json({ error: "File not found" });
-
-    file.trashed = true;
-    file.trashedAt = new Date();
-    await file.save();
-
-    res.json({ success: true, message: "File moved to trash." });
-  } catch (err) {
-    console.error("Error moving file to trash:", err);
-    res.status(500).json({ error: "Failed to move file to trash." });
-  }
+    await FileModel.findByIdAndUpdate(req.params.id, { trashed: true });
+    res.json({ success: true });
 });
 
 // 🗑️ Fetch Trash
@@ -201,6 +245,22 @@ app.get("/trash", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch trash." });
   }
 });
+
+app.get("/trash", async (req, res) => {
+    try {
+        const trashedFolders = await FolderModel.find({ isTrashed: true }).sort({ updatedAt: -1 });
+        const trashedFiles = await FileModel.find({ isTrashed: true }).sort({ updatedAt: -1 });
+
+        res.json({
+            trashedFolders,
+            trashedFiles
+        });
+    } catch (err) {
+        console.error("Failed to fetch trash:", err);
+        res.status(500).json({ error: "Failed to fetch trash" });
+    }
+});
+
 
 // 🔍 Global Smart Search Route (Gemini-based)
 app.get("/smart-search", async (req, res) => {
