@@ -4,7 +4,7 @@ import axios from "../utils/axios";
 import FileCard from "./FileCard";
 import Masonry from "react-masonry-css";
 import useAuthContext from "../context/userContext";
-import { FaFolder, FaEllipsisV } from "react-icons/fa";
+import { FaFolder, FaEllipsisV, FaRegImage } from "react-icons/fa";
 import { MdKeyboardArrowRight } from "react-icons/md";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import { IoIosMenu } from "react-icons/io";
@@ -137,15 +137,15 @@ const FolderView = () => {
         <div className="flex border rounded-3xl overflow-hidden">
           <button
             onClick={() => setViewMode("list")}
-            className="border-r px-4 py-2 text-sm bg-white shadow"
+            className="border-r px-4 py-2 text-sm bg-white shadow cursor-pointer"
           >
             <IoIosMenu size={24} />
           </button>
           <button
             onClick={() => setViewMode("grid")}
-            className="rounded-r-xl px-4 py-2 rounded text-sm bg-white shadow"
+            className="rounded-r-xl px-4 py-2 rounded text-sm bg-white shadow cursor-pointer"
           >
-          <CiGrid41 size={24}/>
+            <CiGrid41 size={24} />
           </button>
         </div>
       </div>
@@ -155,7 +155,9 @@ const FolderView = () => {
         {folders.map((f) => (
           <div
             key={f._id}
-            className={`flex items-center justify-between p-4 cursor-pointer ${viewMode === "list" ? "hover:bg-gray-50 border-t border-gray-300 last:border-none" : "shadow bg-white rounded-xl"
+            className={`relative flex items-center justify-between p-4 cursor-pointer ${viewMode === "list"
+              ? "hover:bg-gray-50 border-t border-gray-300 last:border-none"
+              : "shadow bg-white rounded-xl"
               }`}
             onClick={() => navigate(`/folder/${f._id}`)}
           >
@@ -163,9 +165,46 @@ const FolderView = () => {
               <FaFolder size={20} className="text-amber-300" />
               <span className="font-medium">{f.name}</span>
             </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMenu((prev) => (prev === f._id ? null : f._id));
+              }}
+              className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
+            >
+              <HiOutlineDotsVertical size={18} />
+            </button>
+
+            {activeMenu === f._id && (
+              <div
+                ref={menuRef}
+                className="absolute right-2 top-12 bg-gray-50 shadow rounded text-sm w-40 z-10"
+              >
+                <button
+                  onClick={() => {
+                    handleRenameFolder(f._id);
+                    setActiveMenu(null);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+                >
+                  Rename
+                </button>
+                <button
+                  onClick={() => {
+                    handleDeleteFolder(f._id);
+                    setActiveMenu(null);
+                  }}
+                  className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
+                >
+                  Move to Trash
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
+
 
       {/* Files */}
       {viewMode === "grid" ? (
@@ -186,7 +225,10 @@ const FolderView = () => {
               className="flex justify-between items-center p-4 hover:bg-gray-50"
             >
               <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPreviewFile(f)}>
-                <span className="font-medium">{f.filename}</span>
+                <div className="flex items-center gap-3">
+                  <FaRegImage size={20} className="text-red-500" />
+                  <span className="font-medium">{f.filename}</span>
+                </div>
               </div>
             </div>
           ))}

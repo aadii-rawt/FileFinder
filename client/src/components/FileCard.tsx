@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { BiDotsVerticalRounded } from "react-icons/bi";
-import { FaEllipsisV } from "react-icons/fa";
+import { FaEllipsisV, FaRegImage } from "react-icons/fa";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 
 interface Props {
@@ -39,7 +39,10 @@ const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) =>
     <div className="relative p-3 rounded-xl shadow-sm bg-white my-3">
       <div className="flex justify-between items-center mb-2">
         <div className="text-sm font-medium truncate cursor-pointer" onClick={onPreview}>
-          {file.filename}
+          <div className="flex items-center gap-3">
+            <FaRegImage size={20} className="text-red-500" />
+            <span className="font-medium">{file.filename}</span>
+          </div>
         </div>
 
         <button
@@ -49,7 +52,7 @@ const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) =>
           }}
           className="p-1 rounded-full hover:bg-gray-100 cursor-pointer"
         >
-          <HiOutlineDotsVertical   size={18} />
+          <HiOutlineDotsVertical size={18} />
         </button>
       </div>
 

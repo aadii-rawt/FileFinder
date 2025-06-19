@@ -3,8 +3,8 @@ import { NavLink, useParams } from "react-router-dom";
 import { RiHome2Line } from "react-icons/ri";
 import { FiClock } from "react-icons/fi";
 import { MdDeleteOutline } from "react-icons/md";
-import { IoIosAdd } from "react-icons/io";
 import axios from "../utils/axios";
+import useAuthContext from "../context/userContext";
 
 const Sidebar = () => {
   const [showMenu, setShowMenu] = useState(false);
@@ -13,6 +13,7 @@ const Sidebar = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const { setUploadQueue } = useAuthContext()
 
   const { folderId } = useParams();
 
@@ -41,23 +42,62 @@ const Sidebar = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Push to upload queue
+    setUploadQueue((prev: File[]) => [...prev, file]);
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("parent", folderId || "");
 
-    await axios.post("/upload", formData);
-    window.location.reload();
+    try {
+      await axios.post("/upload", formData);
+      console.log("✅ File uploaded:", file.name);
+    } catch (err) {
+      console.error("Upload failed:", err);
+    }
+
+    // Remove from queue
+    setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
   };
 
   const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Example: Just logging for now
-    console.log("Uploading folder with files:", files);
-    // Here you can loop and call your API
+    // Extract top folder name from first file path
+    const firstFile = files[0];
+    const fullPath = (firstFile as any).webkitRelativePath;
+    const topFolderName = fullPath.split("/")[0];
+
+    // 1️⃣ Create the folder first
+    const folderRes = await axios.post("/folders", {
+      name: topFolderName,
+      parent: folderId || null, // current folderId
+    });
+
+    const newFolderId = folderRes.data._id;
+    console.log("📂 Created folder:", topFolderName, "ID:", newFolderId);
+
+    // 2️⃣ Upload each file to that folder
+    for (const file of files) {
+      // Add to queue
+      setUploadQueue((prev: File[]) => [...prev, file]);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("parent", newFolderId);
+
+      try {
+        await axios.post("/upload", formData);
+        console.log("✅ Uploaded file:", file.name);
+      } catch (err) {
+        console.error("Upload failed:", err);
+      }
+
+      // Remove from queue
+      setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
+    }
   };
-
   return (
     <aside className="w-64 h-screen bg-white sticky top-0 left-0 z-20 flex flex-col pt-6">
 
@@ -143,7 +183,7 @@ const Sidebar = () => {
           }
         >
           <MdDeleteOutline size={22} />
-          Bin
+          Trash
         </NavLink>
       </nav>
 

@@ -9,7 +9,7 @@ const axios = require("axios");
 const base64Img = require("base64-img");
 const FileModel = require("./models/File");
 const FolderModel = require("./models/Folder");
-
+// const trashRoute = require("./routes/trash")
 dotenv.config();
 const app = express();
 
@@ -38,7 +38,8 @@ const upload = multer({ storage });
 
 /* ============== Routes ============== */
 
-// 📁 Upload File
+// app.use("/api/trash", trashRoute)
+// // 📁 Upload File
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const result = await cloudinary.uploader.upload(req.file.path, {
@@ -161,7 +162,6 @@ app.post("/upload-bulk", upload.array("files"), async (req, res) => {
   }
 });
 
-
 // 📂 Create Folder
 app.post("/folders", async (req, res) => {
   try {
@@ -181,7 +181,7 @@ app.post("/folders", async (req, res) => {
 app.get("/folders", async (req, res) => {
   try {
     const parent = req.query.parent || null;
-    const folders = await FolderModel.find({ parent, trashed : false }).sort({ createdAt: 1 });
+    const folders = await FolderModel.find({ parent, trashed: false }).sort({ createdAt: 1 });
     res.json(folders);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch folders" });
@@ -198,11 +198,10 @@ app.get("/folders/:id", async (req, res) => {
   }
 });
 
-
 // Move folder to trash:
 app.patch("/folders/:id/trash", async (req, res) => {
-    await FolderModel.findByIdAndUpdate(req.params.id, { trashed: true });
-    res.json({ success: true });
+  await FolderModel.findByIdAndUpdate(req.params.id, { trashed: true });
+  res.json({ success: true });
 });
 
 // 📄 Get Files by Parent
@@ -218,7 +217,7 @@ app.get("/files", async (req, res) => {
 
 app.get("/files/all", async (req, res) => {
   try {
-    const files = await FileModel.find({trashed : false}).sort({ createdAt: -1 });
+    const files = await FileModel.find({ trashed: false }).sort({ createdAt: -1 });
     res.json(files);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch all files" });
@@ -226,8 +225,8 @@ app.get("/files/all", async (req, res) => {
 });
 
 app.patch("/files/:id/trash", async (req, res) => {
-    await FileModel.findByIdAndUpdate(req.params.id, { trashed: true });
-    res.json({ success: true });
+  await FileModel.findByIdAndUpdate(req.params.id, { trashed: true });
+  res.json({ success: true });
 });
 
 // 🗑️ Fetch Trash
@@ -244,21 +243,6 @@ app.get("/trash", async (req, res) => {
     console.error("Error fetching trash:", err);
     res.status(500).json({ error: "Failed to fetch trash." });
   }
-});
-
-app.get("/trash", async (req, res) => {
-    try {
-        const trashedFolders = await FolderModel.find({ isTrashed: true }).sort({ updatedAt: -1 });
-        const trashedFiles = await FileModel.find({ isTrashed: true }).sort({ updatedAt: -1 });
-
-        res.json({
-            trashedFolders,
-            trashedFiles
-        });
-    } catch (err) {
-        console.error("Failed to fetch trash:", err);
-        res.status(500).json({ error: "Failed to fetch trash" });
-    }
 });
 
 
@@ -315,8 +299,6 @@ app.get("/smart-search", async (req, res) => {
     res.status(500).json({ error: "Smart search failed using Gemini." });
   }
 });
-
-
 
 /* ============== Start Server ============== */
 

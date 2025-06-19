@@ -195,57 +195,9 @@ const Header: React.FC = () => {
                     </ul>
                 )}
             </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3">
-                {/* Folder Name */}
-                <input
-                    type="text"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                    placeholder="New folder name"
-                    className="border border-gray-300 px-3 py-2 rounded"
-                />
-
-                <button
-                    onClick={handleFolderCreate}
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                    Create Folder
-                </button>
-
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="bg-green-600 text-white px-4 py-2 rounded"
-                >
-                    Upload File
-                </button>
-
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    hidden
-                    onChange={handleFileUpload}
-                />
-
-                <button
-                    onClick={() => folderInputRef.current?.click()}
-                    className="bg-purple-600 text-white px-4 py-2 rounded"
-                >
-                    Upload Folder
-                </button>
-
-                <input
-                    type="file"
-                    ref={folderInputRef}
-                    hidden
-                    webkitdirectory="true"
-                    multiple
-                    onChange={handleFolderUpload}
-                />
-
+            <div>
+                <img src="/avatar.png" alt="avatar image" className="w-11 h-11 rounded-full bg-green-500" />
             </div>
-
         </header>
     );
 };
