@@ -3,6 +3,7 @@ import axios from "../utils/axios";
 import { FaFolder } from "react-icons/fa";
 import FileCard from "../components/FileCard";
 import { HiOutlineDotsVertical } from "react-icons/hi";
+import { MdOutlineDeleteForever, MdRestore } from "react-icons/md";
 
 interface Folder {
   _id: string;
@@ -39,7 +40,7 @@ const Trash: React.FC = () => {
 
   const handleRestoreFolder = async (id: string) => {
     if (confirm("Move folder to Trash?")) {
-      await axios.patch(`/folders/${id}/trash`);
+      await axios.patch(`/folders/${id}/restore`);
     }
   };
 
@@ -98,9 +99,18 @@ const Trash: React.FC = () => {
                         handleRestoreFolder(f._id);
                         setActiveMenu(null);
                       }}
-                      className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
                     >
-                      Restore
+                     <MdRestore /> Restore
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleRestoreFolder(f._id);
+                        setActiveMenu(null);
+                      }}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
+                    >
+                     <MdOutlineDeleteForever  /> Delete forever
                     </button>
                   </div>
                 )}

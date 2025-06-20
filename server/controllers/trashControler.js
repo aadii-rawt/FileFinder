@@ -1,6 +1,3 @@
-const FileModel = require("../models/File");
-const FolderModel = require("../models/Folder");
-
 
 export const getTrashFiles = async (req, res) => {
   try {

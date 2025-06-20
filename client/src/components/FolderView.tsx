@@ -5,10 +5,11 @@ import FileCard from "./FileCard";
 import Masonry from "react-masonry-css";
 import useAuthContext from "../context/userContext";
 import { FaFolder, FaEllipsisV, FaRegImage } from "react-icons/fa";
-import { MdKeyboardArrowRight } from "react-icons/md";
+import { MdDeleteOutline, MdKeyboardArrowRight } from "react-icons/md";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import { IoIosMenu } from "react-icons/io";
 import { CiGrid41 } from "react-icons/ci";
+import { LiaEdit } from "react-icons/lia";
 
 interface Folder {
   _id: string;
@@ -186,18 +187,18 @@ const FolderView = () => {
                     handleRenameFolder(f._id);
                     setActiveMenu(null);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                 >
-                  Rename
+                 <LiaEdit  /> Rename
                 </button>
                 <button
                   onClick={() => {
                     handleDeleteFolder(f._id);
                     setActiveMenu(null);
                   }}
-                  className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
                 >
-                  Move to Trash
+                 <MdDeleteOutline />   Move to Trash
                 </button>
               </div>
             )}
@@ -218,11 +219,11 @@ const FolderView = () => {
           ))}
         </Masonry>
       ) : (
-        <div className="divide-y border-t border-gray-300">
+        <div className="divide-y ">
           {files.map((f) => (
             <div
               key={f._id}
-              className="flex justify-between items-center p-4 hover:bg-gray-50"
+              className="flex justify-between items-center p-4 hover:bg-gray-50 border-t border-gray-300"
             >
               <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPreviewFile(f)}>
                 <div className="flex items-center gap-3">

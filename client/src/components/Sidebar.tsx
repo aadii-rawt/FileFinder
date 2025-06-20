@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { NavLink, useParams } from "react-router-dom";
 import { RiHome2Line } from "react-icons/ri";
-import { FiClock } from "react-icons/fi";
-import { MdDeleteOutline } from "react-icons/md";
+import { FiClock, FiFilePlus } from "react-icons/fi";
+import { MdDeleteOutline, MdDriveFolderUpload, MdOutlineCreateNewFolder } from "react-icons/md";
 import axios from "../utils/axios";
 import useAuthContext from "../context/userContext";
 
@@ -64,40 +64,75 @@ const Sidebar = () => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Extract top folder name from first file path
-    const firstFile = files[0];
-    const fullPath = (firstFile as any).webkitRelativePath;
-    const topFolderName = fullPath.split("/")[0];
+    console.log("Selected files:", files.map(f => (f as any).webkitRelativePath));
 
-    // 1️⃣ Create the folder first
-    const folderRes = await axios.post("/folders", {
+    const folderMap = new Map(); // Map full path → folderId
+
+    // 1️⃣ First create TOP folder
+    const firstPath = (files[0] as any).webkitRelativePath;
+    const topFolderName = firstPath.split("/")[0];
+
+    const topFolderRes = await axios.post("/folders", {
       name: topFolderName,
-      parent: folderId || null, // current folderId
+      parent: folderId || null, // current folder
     });
 
-    const newFolderId = folderRes.data._id;
-    console.log("📂 Created folder:", topFolderName, "ID:", newFolderId);
+    const topFolderId = topFolderRes.data._id;
+    folderMap.set(topFolderName, topFolderId);
 
-    // 2️⃣ Upload each file to that folder
+    console.log("📂 Created top folder:", topFolderName, topFolderId);
+
+    // 2️⃣ Process all paths → build folder tree
     for (const file of files) {
-      // Add to queue
+      const relativePath = (file as any).webkitRelativePath; // e.g. Images/Docs/file1.pdf
+      const pathParts = relativePath.split("/");
+      const fileName = pathParts.pop(); // remove file name
+
+      let currentParentId = topFolderId;
+      let currentPath = topFolderName;
+
+      // For each folder level
+      for (let i = 1; i < pathParts.length; i++) {
+        currentPath = pathParts.slice(0, i + 1).join("/"); // e.g. Images/Docs
+
+        if (!folderMap.has(currentPath)) {
+          // Create folder
+          const folderName = pathParts[i];
+
+          const folderRes = await axios.post("/folders", {
+            name: folderName,
+            parent: currentParentId,
+          });
+
+          const newFolderId = folderRes.data._id;
+          folderMap.set(currentPath, newFolderId);
+          currentParentId = newFolderId;
+
+          console.log("📂 Created subfolder:", currentPath, newFolderId);
+        } else {
+          currentParentId = folderMap.get(currentPath);
+        }
+      }
+
+      // 3️⃣ Upload file to correct parent
       setUploadQueue((prev: File[]) => [...prev, file]);
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("parent", newFolderId);
+      formData.append("parent", currentParentId);
 
       try {
         await axios.post("/upload", formData);
-        console.log("✅ Uploaded file:", file.name);
+        console.log("✅ Uploaded file:", file.name, "→ Parent:", currentParentId);
       } catch (err) {
         console.error("Upload failed:", err);
       }
 
-      // Remove from queue
       setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
     }
   };
+
+
   return (
     <aside className="w-64 h-screen bg-white sticky top-0 left-0 z-20 flex flex-col pt-6">
 
@@ -117,16 +152,16 @@ const Sidebar = () => {
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute top-0 left-8 bg-white shadow rounded w-48  z-30"
+            className="absolute top-0 left-8 bg-white shadow-lg rounded w-48  z-30"
           >
             <button
               onClick={() => {
                 setShowModal(true);
                 setShowMenu(false);
               }}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-3 "
             >
-              ➕ New Folder
+              <MdOutlineCreateNewFolder size={20} /> New Folder
             </button>
 
             <button
@@ -134,9 +169,9 @@ const Sidebar = () => {
                 fileInputRef.current?.click();
                 setShowMenu(false);
               }}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-3"
             >
-              ⬆️ File Upload
+              <FiFilePlus size={20} /> File Upload
             </button>
 
             <button
@@ -144,9 +179,9 @@ const Sidebar = () => {
                 folderInputRef.current?.click();
                 setShowMenu(false);
               }}
-              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-3"
             >
-              📁 Folder Upload
+              <MdDriveFolderUpload size={20} /> Folder Upload
             </button>
           </div>
         )}

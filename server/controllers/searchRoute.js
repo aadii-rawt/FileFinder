@@ -1,6 +1,5 @@
 import axios from "axios";
 
-const FileModel = require("../models/File")
 
 export const searchFile = async (req, res) => {
   const { q } = req.query;

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { BiDotsVerticalRounded } from "react-icons/bi";
 import { FaEllipsisV, FaRegImage } from "react-icons/fa";
 import { HiOutlineDotsVertical } from "react-icons/hi";
+import { LiaEdit } from "react-icons/lia";
+import { MdDeleteOutline, MdOutlineFileDownload } from "react-icons/md";
 
 interface Props {
   file: {
@@ -34,6 +36,23 @@ const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) =>
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleDownload = async (file) => {
+    try {
+      const response = await fetch(file.url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = file.filename;
+      link.click();
+
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
 
   return (
     <div className="relative p-3 rounded-xl shadow-sm bg-white my-3">
@@ -76,30 +95,31 @@ const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) =>
         >
           <button
             onClick={() => {
-              onDownload(file.url, file.filename);
+              // onDownload(file.url, file.filename);
+              handleDownload(file)
               setShowMenu(false);
             }}
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
           >
-            Download
+            <MdOutlineFileDownload /> Download
           </button>
           <button
             onClick={() => {
               onRename(file._id);
               setShowMenu(false);
             }}
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer"
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
           >
-            Rename
+            <LiaEdit />  Rename
           </button>
           <button
             onClick={() => {
               onDelete(file._id);
               setShowMenu(false);
             }}
-            className="w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100 cursor-pointer"
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
           >
-            Move to Trash
+            <MdDeleteOutline />  Move to Trash
           </button>
         </div>
       )}

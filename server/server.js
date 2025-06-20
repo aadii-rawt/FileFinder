@@ -97,6 +97,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).json({ error: "Upload failed" });
   }
 });
+
+
 app.post("/upload-bulk", upload.array("files"), async (req, res) => {
   try {
     const uploadedFiles = [];
@@ -197,12 +199,32 @@ app.get("/folders/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch folder" });
   }
 });
+// Add this route:
+app.get("/folders/test", async (req, res) => {
+  try {
+    const folders = await FolderModel.find().limit(5);
+    res.json(folders);
+  } catch (err) {
+    console.error("❌ TEST ERROR:", err);
+    res.status(500).json({ error: "Test failed" });
+  }
+});
+
+
+
+
 
 // Move folder to trash:
 app.patch("/folders/:id/trash", async (req, res) => {
   await FolderModel.findByIdAndUpdate(req.params.id, { trashed: true });
   res.json({ success: true });
 });
+
+app.patch("/folders/:id/restore", async (req, res) => {
+  await FolderModel.findByIdAndUpdate(req.params.id, { trashed: false });
+  res.json({ success: true });
+});
+
 
 // 📄 Get Files by Parent
 app.get("/files", async (req, res) => {
