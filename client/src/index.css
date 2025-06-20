@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Francois+One&display=swap');
+
 @import "tailwindcss";
 
 .my-masonry-grid {
@@ -12,4 +14,10 @@
     padding-left: 30px;
     /* gutter size */
     background-clip: padding-box;
+}
+
+.francois-one-regular {
+  font-family: "Francois One", sans-serif;
+  font-weight: 400;
+  font-style: normal;
 }

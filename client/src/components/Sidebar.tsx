@@ -39,12 +39,15 @@ const Sidebar = () => {
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
 
-    // Push to upload queue
-    setUploadQueue((prev: File[]) => [...prev, file]);
+  const fileArray = Array.from(files);
 
+  // Push all to queue
+  setUploadQueue((prev: File[]) => [...prev, ...fileArray]);
+
+  for (const file of fileArray) {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("parent", folderId || "");
@@ -53,12 +56,17 @@ const Sidebar = () => {
       await axios.post("/upload", formData);
       console.log("✅ File uploaded:", file.name);
     } catch (err) {
-      console.error("Upload failed:", err);
+      console.error("❌ Upload failed:", err);
     }
 
     // Remove from queue
     setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
-  };
+  }
+
+  // Reset file input so same file can be reselected again
+  e.target.value = "";
+};
+
 
   const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -136,9 +144,9 @@ const Sidebar = () => {
   return (
     <aside className="w-64 h-screen bg-white sticky top-0 left-0 z-20 flex flex-col pt-6">
 
-      <div className="px-6 mb-6">
-
-        <img className="w-18" src="/logo.png" alt="" />
+      <div className="px-4 mb-6 flex items-center gap-2">
+        <img className="w-16" src="/logo.png" alt="" />
+        <h1 className="text-2xl font-semibold font-francois">DotDrive </h1>
       </div>
 
       <div className="relative px-2">
@@ -227,6 +235,7 @@ const Sidebar = () => {
         type="file"
         ref={fileInputRef}
         hidden
+        multiple
         onChange={handleFileUpload}
       />
 

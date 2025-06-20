@@ -1,5 +1,5 @@
-// const express = require(express)
-// const FolderModel = require('../models/Folder')
+
+const FolderModel = require('../models/Folder')
 
 export const createFolder = async (req, res) => {
   try {
