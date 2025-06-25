@@ -31,7 +31,7 @@ function SearchPage() {
 
     setLoading(true);
     try {
-      const res = await axios.get(`/smart-search?q=${encodeURIComponent(query)}`);
+      const res = await axios.get(`/search?q=${encodeURIComponent(query)}`);
       setFiles(res.data);
     } catch (err) {
       console.error("Error in smart search:", err);

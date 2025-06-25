@@ -88,7 +88,7 @@ const Header: React.FC = () => {
                         value={query}
                         onChange={handleInputChange}
                         onKeyDown={handleKeyDown}
-                        placeholder="🔍 Search files..."
+                        placeholder=" Ask AI to search for any file"
                         className="outline-none w-full"
                     />
                     {query && (

@@ -1,7 +1,7 @@
 const express = require("express");
-const { uploadFile, uploadBulk } = require("../controllers/uploadControler");
 const router = express.Router()
-const multer = require('multer')
+const multer = require('multer');
+const { uploadFile, uploadBulk } = require("../controllers/uploadControler");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -12,6 +12,6 @@ const upload = multer({ storage });
 
 router.post("/", upload.single("file"), uploadFile);
 
-router.post("/upload-bulk", upload.array("files"), uploadBulk);
+router.post("/bulk", upload.array("files"), uploadBulk);
 
 module.exports = router

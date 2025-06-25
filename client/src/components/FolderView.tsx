@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "../utils/axios";
 import FileCard from "./FileCard";
 import Masonry from "react-masonry-css";
 import useAuthContext from "../context/userContext";
@@ -10,6 +9,7 @@ import { HiOutlineDotsVertical } from "react-icons/hi";
 import { IoIosMenu } from "react-icons/io";
 import { CiGrid41 } from "react-icons/ci";
 import { LiaEdit } from "react-icons/lia";
+import axios from "../utils/axios";
 
 interface Folder {
   _id: string;
@@ -82,11 +82,10 @@ const FolderView = () => {
 
   const handleDeleteFolder = async (id: string) => {
     if (confirm("Move folder to Trash?")) {
-      await axios.patch(`/folders/${id}/trash`);
+      await axios.patch(`/folders/trash/${id}`);
       fetchData(); // refresh
     }
   };
-
 
   // CLOSE CONTEXT MENU on outside click:
   useEffect(() => {
@@ -180,6 +179,7 @@ const FolderView = () => {
             {activeMenu === f._id && (
               <div
                 ref={menuRef}
+                onClick={(e) => e.stopPropagation()}
                 className="absolute right-2 top-12 bg-gray-50 shadow rounded text-sm w-40 z-10"
               >
                 <button
@@ -189,7 +189,16 @@ const FolderView = () => {
                   }}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                 >
-                 <LiaEdit  /> Rename
+                  <LiaEdit /> Download
+                </button>
+                <button
+                  onClick={() => {
+                    handleRenameFolder(f._id);
+                    setActiveMenu(null);
+                  }}
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                >
+                  <LiaEdit /> Rename
                 </button>
                 <button
                   onClick={() => {
@@ -198,7 +207,7 @@ const FolderView = () => {
                   }}
                   className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
                 >
-                 <MdDeleteOutline />   Move to Trash
+                  <MdDeleteOutline />   Move to Trash
                 </button>
               </div>
             )}

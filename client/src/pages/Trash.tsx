@@ -40,7 +40,8 @@ const Trash: React.FC = () => {
 
   const handleRestoreFolder = async (id: string) => {
     if (confirm("Move folder to Trash?")) {
-      await axios.patch(`/folders/${id}/restore`);
+      await axios.patch(`/trash/restore/${id}`);
+      fetchTrash()
     }
   };
 
@@ -59,6 +60,26 @@ const Trash: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const permanentlyDeleteItem = async (id: string) => {
+    try {
+      const confirmDelete = window.confirm("Are you sure you want to permanently delete this item? This action cannot be undone.");
+      if (!confirmDelete) return;
+
+      const res = await axios.delete(`/trash/permanent/${id}`);
+
+      if (res.data.success) {
+        alert(`✅ ${res.data.type === "folder" ? "Folder" : "File"} permanently deleted.`);
+        fetchTrash()
+      } else {
+        alert("❌ Failed to delete item.");
+      }
+    } catch (err: any) {
+      console.error("Permanent delete error:", err);
+      alert("❌ Something went wrong while deleting.");
+    }
+  };
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -101,16 +122,16 @@ const Trash: React.FC = () => {
                       }}
                       className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
                     >
-                     <MdRestore /> Restore
+                      <MdRestore /> Restore
                     </button>
                     <button
                       onClick={() => {
-                        handleRestoreFolder(f._id);
+                        permanentlyDeleteItem(f._id);
                         setActiveMenu(null);
                       }}
                       className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
                     >
-                     <MdOutlineDeleteForever  /> Delete forever
+                      <MdOutlineDeleteForever /> Delete forever
                     </button>
                   </div>
                 )}

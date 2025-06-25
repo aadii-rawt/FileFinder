@@ -1,4 +1,18 @@
-export const uploadFile = async (req, res) => {
+const cloudinary = require("cloudinary").v2;
+const axios = require("axios");
+const base64Img = require("base64-img");
+const FileModel = require("../models/File")
+const fs = require("fs");
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_KEY,
+    api_secret: process.env.CLOUD_SECRET,
+});
+
+
+const uploadFile = async (req, res) => {
+    console.log("reached")
     try {
         const result = await cloudinary.uploader.upload(req.file.path, {
             resource_type: "auto",
@@ -56,7 +70,7 @@ export const uploadFile = async (req, res) => {
     }
 }
 
-export const uploadBulk = async (req, res) => {
+const uploadBulk = async (req, res) => {
     try {
         const uploadedFiles = [];
 
@@ -120,3 +134,5 @@ export const uploadBulk = async (req, res) => {
         res.status(500).json({ error: "Bulk upload failed" });
     }
 }
+
+module.exports = { uploadFile, uploadBulk }

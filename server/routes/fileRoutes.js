@@ -1,10 +1,9 @@
 const express = require('express');
-const multer = require('multer');
-const File = require('../models/File');
-const { GetAllFiles, getFile } = require('../controllers/fileControler');
+const { getFile, getAllFiles, trashFile } = require('../controllers/fileControler');
 const router = express.Router();
 
 router.get("/", getFile);
-router.get("/files/all",GetAllFiles);
+router.get("/all", getAllFiles);
+router.patch("/trash/:id", trashFile)
 
 module.exports = router;
