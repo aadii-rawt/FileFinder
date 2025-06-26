@@ -4,6 +4,7 @@ import { FaFolder } from "react-icons/fa";
 import FileCard from "../components/FileCard";
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import { MdOutlineDeleteForever, MdRestore } from "react-icons/md";
+import useAuthContext from "../context/userContext";
 
 interface Folder {
   _id: string;
@@ -24,9 +25,15 @@ const Trash: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const { user } = useAuthContext()
+
   const fetchTrash = async () => {
+    console.log("testing");
+    
     try {
-      const res = await axios.get("/trash");
+      const res = await axios.post("/trash", {
+        userId: user?._id, // 👈 pass userId in body
+      });
       setFolders(res.data.trashedFolders);
       setFiles(res.data.trashedFiles);
     } catch (err) {
@@ -34,16 +41,20 @@ const Trash: React.FC = () => {
     }
   };
 
+
   useEffect(() => {
     fetchTrash();
   }, []);
 
   const handleRestoreFolder = async (id: string) => {
     if (confirm("Move folder to Trash?")) {
-      await axios.patch(`/trash/restore/${id}`);
-      fetchTrash()
+      await axios.patch(`/trash/restore/${id}`, {
+        userId: user?._id, // 👈 pass userId in body
+      });
+      fetchTrash();
     }
   };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -63,22 +74,25 @@ const Trash: React.FC = () => {
 
   const permanentlyDeleteItem = async (id: string) => {
     try {
-      const confirmDelete = window.confirm("Are you sure you want to permanently delete this item? This action cannot be undone.");
+      const confirmDelete = window.confirm("Are you sure you want to permanently delete this item?");
       if (!confirmDelete) return;
 
-      const res = await axios.delete(`/trash/permanent/${id}`);
+      const res = await axios.delete(`/trash/permanent/${id}`, {
+        data: { userId: user._id }, // 👈 pass userId in `data`
+      });
 
       if (res.data.success) {
         alert(`✅ ${res.data.type === "folder" ? "Folder" : "File"} permanently deleted.`);
-        fetchTrash()
+        fetchTrash();
       } else {
         alert("❌ Failed to delete item.");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Permanent delete error:", err);
       alert("❌ Something went wrong while deleting.");
     }
   };
+
 
 
   return (
