@@ -12,127 +12,134 @@ cloudinary.config({
 
 
 const uploadFile = async (req, res) => {
-    console.log("reached")
-    try {
-        const result = await cloudinary.uploader.upload(req.file.path, {
-            resource_type: "auto",
-        });
+  // console.log("reached");
+  console.log("body" , req.body);
+  
 
-        let geminiDescription = "";
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "auto",
+    });
 
-        if (req.file.mimetype.startsWith("image")) {
-            try {
-                const base64Image = base64Img.base64Sync(req.file.path);
-                const base64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, "");
+    let geminiDescription = "";
 
-                const geminiResponse = await axios.post(
-                    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-                    {
-                        contents: [
-                            {
-                                parts: [
-                                    { text: "Describe this image clearly and concisely." },
-                                    {
-                                        inlineData: {
-                                            mimeType: req.file.mimetype,
-                                            data: base64,
-                                        },
-                                    },
-                                ],
-                            },
-                        ],
-                    }
-                );
+    if (req.file.mimetype.startsWith("image")) {
+      try {
+        const base64Image = base64Img.base64Sync(req.file.path);
+        const base64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, "");
 
-                geminiDescription =
-                    geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                console.log("🧠 Gemini Description:", geminiDescription);
-            } catch (err) {
-                console.error("Gemini API error:", err.response?.data || err.message);
-            }
-        }
+        const geminiResponse = await axios.post(
+          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+          {
+            contents: [
+              {
+                parts: [
+                  { text: "Describe this image clearly and concisely." },
+                  {
+                    inlineData: {
+                      mimeType: req.file.mimetype,
+                      data: base64,
+                    },
+                  },
+                ],
+              },
+            ],
+          }
+        );
 
-        const newFile = new FileModel({
-            filename: req.file.originalname,
-            url: result.secure_url,
-            type: req.file.mimetype,
-            geminiText: geminiDescription,
-            parent: req.body.parent || null,
-        });
-
-        await newFile.save();
-        fs.unlinkSync(req.file.path);
-
-        res.status(200).json(newFile);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Upload failed" });
+        geminiDescription =
+          geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        console.log("🧠 Gemini Description:", geminiDescription);
+      } catch (err) {
+        console.error("Gemini API error:", err.response?.data || err.message);
+      }
     }
-}
+
+    const newFile = new FileModel({
+      filename: req.file.originalname,
+      url: result.secure_url,
+      type: req.file.mimetype,
+      geminiText: geminiDescription,
+      parent: req.body.parent || null,
+      user: req.body.userId, // <-- ⬅️ Important
+    });
+
+    await newFile.save();
+    fs.unlinkSync(req.file.path);
+
+    res.status(200).json(newFile);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Upload failed" });
+  }
+};
+
 
 const uploadBulk = async (req, res) => {
-    try {
-        const uploadedFiles = [];
+  try {
+    const uploadedFiles = [];
 
-        for (const file of req.files) {
-            const result = await cloudinary.uploader.upload(file.path, {
-                resource_type: "auto",
-            });
+    for (const file of req.files) {
+      const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: "auto",
+      });
 
-            let geminiDescription = "";
+      let geminiDescription = "";
 
-            if (file.mimetype.startsWith("image")) {
-                try {
-                    const base64Image = base64Img.base64Sync(file.path);
-                    const base64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, "");
+      if (file.mimetype.startsWith("image")) {
+        try {
+          const base64Image = base64Img.base64Sync(file.path);
+          const base64 = base64Image.replace(/^data:image\/[a-z]+;base64,/, "");
 
-                    const geminiResponse = await axios.post(
-                        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-                        {
-                            contents: [
-                                {
-                                    parts: [
-                                        { text: "Describe this image clearly and concisely." },
-                                        {
-                                            inlineData: {
-                                                mimeType: file.mimetype,
-                                                data: base64,
-                                            },
-                                        },
-                                    ],
-                                },
-                            ],
-                        }
-                    );
-
-                    geminiDescription =
-                        geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                    console.log("🧠 Gemini:", file.originalname, " → ", geminiDescription);
-                } catch (err) {
-                    console.error("Gemini error:", err.response?.data || err.message);
-                }
+          const geminiResponse = await axios.post(
+            `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+              contents: [
+                {
+                  parts: [
+                    { text: "Describe this image clearly and concisely." },
+                    {
+                      inlineData: {
+                        mimeType: file.mimetype,
+                        data: base64,
+                      },
+                    },
+                  ],
+                },
+              ],
             }
+          );
 
-            const newFile = new FileModel({
-                filename: file.originalname,
-                url: result.secure_url,
-                type: file.mimetype,
-                geminiText: geminiDescription,
-                parent: req.body.parent || null,
-                path: file.webkitRelativePath || "", // you can save folder path
-            });
-
-            await newFile.save();
-            uploadedFiles.push(newFile);
-
-            fs.unlinkSync(file.path);
+          geminiDescription =
+            geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          console.log("🧠 Gemini:", file.originalname, " → ", geminiDescription);
+        } catch (err) {
+          console.error("Gemini error:", err.response?.data || err.message);
         }
+      }
 
-        res.status(200).json({ uploadedFiles });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Bulk upload failed" });
+      const newFile = new FileModel({
+        filename: file.originalname,
+        url: result.secure_url,
+        type: file.mimetype,
+        geminiText: geminiDescription,
+        parent: req.body.parent || null,
+        path: file.webkitRelativePath || "",
+        user: req.body.userId, // <-- ⬅️ Important
+      });
+
+      await newFile.save();
+      uploadedFiles.push(newFile);
+
+      fs.unlinkSync(file.path);
     }
-}
+
+    res.status(200).json({ uploadedFiles });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Bulk upload failed" });
+  }
+};
+
 
 module.exports = { uploadFile, uploadBulk }

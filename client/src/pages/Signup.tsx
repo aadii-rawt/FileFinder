@@ -1,21 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "../utils/axios";
 import useAuthContext from "../context/userContext";
 import { HiOutlineMail } from "react-icons/hi";
 import { FiUser } from "react-icons/fi";
 import { MdLockOutline } from "react-icons/md";
 import { LuEye, LuEyeClosed } from "react-icons/lu";
 import Loader from "../components/Loader";
+import axios from "axios";
 
-axios.defaults.withCredentials = true;
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
-    agreeTerms: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,54 +32,25 @@ const Signup = () => {
     }
   };
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+ const handleSignup = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const { email, password, username, agreeTerms } = formData;
+  try {
+    const response = await axios.post('http://localhost:5000/api/v1/auth/signup', formData);
 
-      if (!email || !username || !password) {
-        setError("Please enter all details");
-        setLoading(false);
-        return;
-      }
+    // ✅ Store token
+    localStorage.setItem('token', response.data.token);
 
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters long");
-        setLoading(false);
-        return;
-      }
-
-      if (!agreeTerms) {
-        setError("Please accept the terms and privacy policy");
-        setLoading(false);
-        return;
-      }
-
-      const res = await axios.post(`/auth/register`, {
-        name: username,
-        email,
-        password,
-      });
-
-      const userData = res.data.user;
-      setUser(userData);
-      navigate("/");
-
-      // return { success: true };
-    } catch (err) {
-      console.error("OTP request error:", err.response?.data || err.message);
-      setError(err.response?.data?.error || "Failed to send OTP");
-      return {
-        success: false,
-        error: err.response?.data?.error || "OTP request failed",
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
+    setUser(response.data.user);
+    navigate('/');
+  } catch (error: any) {
+    alert(error.response?.data?.error || 'Signup failed');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-4">

@@ -6,6 +6,7 @@ const FolderSchema = new mongoose.Schema(
     parent: { type: mongoose.Schema.Types.ObjectId, ref: "Folder", default: null },
     trashed: { type: Boolean, default: false },
     trashedAt: { type: Date, default: null },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );

@@ -28,7 +28,6 @@ const Header: React.FC = () => {
     const [folderName, setFolderName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const folderInputRef = useRef<HTMLInputElement>(null);
 
     const navigate = useNavigate();
     const { setPreviewFile,} = useAuthContext();
@@ -73,6 +72,10 @@ const Header: React.FC = () => {
         return fileTypeIcons[type] || fileTypeIcons["default"];
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem("token")
+        navigate("/login")
+    }
 
     return (
         <header className="bg-white p-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10">
@@ -124,7 +127,7 @@ const Header: React.FC = () => {
                     </ul>
                 )}
             </div>
-            <div>
+            <div onClick={handleLogout}>
                 <img src="/avatar.png" alt="avatar image" className="w-11 h-11 rounded-full bg-green-500" />
             </div>
         </header>

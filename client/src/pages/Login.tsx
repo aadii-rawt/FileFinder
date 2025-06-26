@@ -28,58 +28,37 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    try {
-      const { email, password } = formData;
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-      if (!email || !password) {
-        setError("Please enter your details");
-        return;
-      }
+  try {
+    const { email, password } = formData;
 
-      const res = await axios.post("/api/auth/login", {
-        email,
-        password,
-      });
-
-      const userData = res.data.user;
-      setUser(userData);
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid credentials");
-    } finally {
-      setLoading(false);
+    if (!email || !password) {
+      setError("Please enter your details");
+      return;
     }
-  };
 
-  // const handlePassReset = async (e) => {
-  //   e.preventDefault();
-  //   try {
-  //     await sendPasswordResetEmail(auth, formData?.email);
-  //     alert("Password reset email sent! Check your inbox.");
-  //   } catch (error) {
-  //     console.error("Error sending password reset email:", error.message);
-  //   }
-  // };
+    const res = await axios.post("http://localhost:5000/api/v1/auth/login", formData);
 
-  useEffect(() => {
-    const checkIfLoggedIn = async () => {
-      try {
-        const res = await axios.get(`/api/auth/me`);
-        if (res.data?.user) {
-          setUser(res.data.user);
-          navigate("/dashboard");
-        }
-      } catch (err) {
-        // Not logged in — no action
-      }
-    };
+    const userData = res.data.user;
+    const token = res.data.token;
 
-    checkIfLoggedIn();
-  }, [navigate, setUser]);
+    // ✅ Save token to localStorage
+    localStorage.setItem("token", token);
+
+    setUser(userData);
+    navigate("/");
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Invalid credentials");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-4">

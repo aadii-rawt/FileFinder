@@ -13,17 +13,28 @@ const Sidebar = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  const { setUploadQueue } = useAuthContext()
+  const { setUploadQueue, user } = useAuthContext()
 
   const { folderId } = useParams();
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
-    await axios.post("/folders", { name: folderName, parent: folderId || null });
-    setFolderName("");
-    setShowModal(false);
-    window.location.reload();
+
+    try {
+      await axios.post("/folders", {
+        name: folderName,
+        parent: folderId || null,
+        userId: user?._id, // ✅ Send user ID
+      });
+
+      setFolderName("");
+      setShowModal(false);
+      window.location.reload();
+    } catch (err) {
+      console.error("❌ Failed to create folder:", err);
+    }
   };
+
 
   // Close on outside click
   useEffect(() => {
@@ -39,33 +50,36 @@ const Sidebar = () => {
   }, []);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const files = e.target.files;
-  if (!files || files.length === 0) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  const fileArray = Array.from(files);
+    const fileArray = Array.from(files);
 
-  // Push all to queue
-  setUploadQueue((prev: File[]) => [...prev, ...fileArray]);
+    // 🔐 Your logged-in user's ID (from auth context, localStorage, etc.)
 
-  for (const file of fileArray) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("parent", folderId || "");
+    // Push all to queue
+    setUploadQueue((prev: File[]) => [...prev, ...fileArray]);
 
-    try {
-      await axios.post("/upload", formData);
-      console.log("✅ File uploaded:", file.name);
-    } catch (err) {
-      console.error("❌ Upload failed:", err);
+    for (const file of fileArray) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("parent", folderId || "");
+      formData.append("userId", user?._id); // ✅ Send userId
+
+      try {
+        await axios.post("/upload", formData);
+        console.log("✅ File uploaded:", file.name);
+      } catch (err) {
+        console.error("❌ Upload failed:", err);
+      }
+
+      // Remove from queue
+      setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
     }
 
-    // Remove from queue
-    setUploadQueue((prev: File[]) => prev.filter((f) => f.name !== file.name));
-  }
-
-  // Reset file input so same file can be reselected again
-  e.target.value = "";
-};
+    // Reset file input so same file can be reselected again
+    e.target.value = "";
+  };
 
 
   const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,9 +94,12 @@ const Sidebar = () => {
     const firstPath = (files[0] as any).webkitRelativePath;
     const topFolderName = firstPath.split("/")[0];
 
+    console.log("id", user?._id);
+
     const topFolderRes = await axios.post("/folders", {
       name: topFolderName,
       parent: folderId || null, // current folder
+      userId: user?._id
     });
 
     const topFolderId = topFolderRes.data._id;
@@ -110,6 +127,7 @@ const Sidebar = () => {
           const folderRes = await axios.post("/folders", {
             name: folderName,
             parent: currentParentId,
+            userId: user?._id
           });
 
           const newFolderId = folderRes.data._id;
@@ -182,7 +200,7 @@ const Sidebar = () => {
               <FiFilePlus size={20} /> File Upload
             </button>
 
-            <button
+            {/* <button
               onClick={() => {
                 folderInputRef.current?.click();
                 setShowMenu(false);
@@ -190,7 +208,7 @@ const Sidebar = () => {
               className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-3"
             >
               <MdDriveFolderUpload size={20} /> Folder Upload
-            </button>
+            </button> */}
           </div>
         )}
       </div>

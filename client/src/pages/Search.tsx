@@ -20,25 +20,34 @@ function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [queryParams] = useSearchParams();
   const query = queryParams.get("q") || "";
-  const { previewFile, setPreviewFile } = useAuthContext();
+  const { previewFile, setPreviewFile,user } = useAuthContext();
   const navigate = useNavigate();
 
   const fetchSmartSearch = async () => {
-    if (!query.trim()) {
-      setFiles([]);
-      return;
-    }
+  if (!query.trim()) {
+    setFiles([]);
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const res = await axios.get(`/search?q=${encodeURIComponent(query)}`);
-      setFiles(res.data);
-    } catch (err) {
-      console.error("Error in smart search:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+
+  const userId = user?._id // or use context if you have it
+
+  try {
+    const res = await axios.get(`/search`, {
+      params: {
+        q: query,
+        userId,
+      },
+    });
+
+    setFiles(res.data);
+  } catch (err) {
+    console.error("Error in smart search:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchSmartSearch();

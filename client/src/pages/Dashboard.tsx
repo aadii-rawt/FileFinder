@@ -16,7 +16,7 @@ function Dashboard() {
   const { folderId } = useParams();
   const [parentId, setParentId] = useState<string | null>(folderId || null);
   const [query, setQuery] = useState("");
-  const { previewFile, setPreviewFile, uploadQueue } = useAuthContext();
+  const { previewFile, setPreviewFile, uploadQueue ,user} = useAuthContext();
 
   const [syncFolderSet, setSyncFolderSet] = useState<boolean | null>(null);
 

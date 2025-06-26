@@ -33,7 +33,7 @@ const FolderView = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [files, setFiles] = useState<FileType[]>([]);
   const [breadcrumbs, setBreadcrumbs] = useState<Folder[]>([]);
-  const { setPreviewFile } = useAuthContext();
+  const { setPreviewFile, user } = useAuthContext();
 
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -41,18 +41,21 @@ const FolderView = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [renameTarget, setRenameTarget] = useState<{ id: string; originalName: string } | null>(null);
 
+  const userId = user?._id
+  
   const fetchData = async () => {
     const resFolders = await axios.get(`/folders`, {
-      params: { parent: folderId || null },
+      params: { parent: folderId || null, userId },
     });
+
     const resFiles = await axios.get(`/files`, {
-      params: { parent: folderId || null },
+      params: { parent: folderId || null, userId },
     });
 
     setFolders(resFolders.data);
     setFiles(resFiles.data);
 
-    // fetch breadcrumbs
+    // fetch breadcrumbs (no user filter needed here)
     if (folderId) {
       const chain: Folder[] = [];
       let currentId: string | null = folderId;
@@ -60,7 +63,7 @@ const FolderView = () => {
       while (currentId) {
         const res = await axios.get(`/folders/${currentId}`);
         const folder: Folder = res.data;
-        chain.unshift(folder); // add to start
+        chain.unshift(folder);
         currentId = folder.parent || null;
       }
 
@@ -69,6 +72,7 @@ const FolderView = () => {
       setBreadcrumbs([]);
     }
   };
+
 
   useEffect(() => {
     fetchData();
@@ -230,7 +234,7 @@ const FolderView = () => {
           columnClassName="my-masonry-grid_column"
         >
           {files.map((f) => (
-            <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)}  />
+            <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)} />
           ))}
         </Masonry>
       ) : (
