@@ -14,12 +14,12 @@ interface Props {
     geminiText: string;
   };
   onPreview: () => void;
-  onRename: (id: string) => void;
+  onRename: (id: string, originalName: string) => void;
   onDelete: (id: string) => void;
   onDownload: (url: string, filename: string) => void;
 }
 
-const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) => {
+const FileCard = ({ file, onPreview, onRename, onDownload }: Props) => {
   const [showMenu, setShowMenu] = useState(false);
   const isImage = file.type.startsWith("image");
   const menuRef = useRef<HTMLDivElement>(null);
@@ -104,14 +104,16 @@ const FileCard = ({ file, onPreview, onRename, onDelete, onDownload }: Props) =>
             <MdOutlineFileDownload /> Download
           </button>
           <button
+            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
+
             onClick={() => {
-              onRename(file._id);
+              onRename(file._id, file.filename);
               setShowMenu(false);
             }}
-            className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer  flex items-center gap-2"
           >
-            <LiaEdit />  Rename
+            <LiaEdit /> Rename
           </button>
+
           <button
             onClick={() => {
               onDelete(file._id);

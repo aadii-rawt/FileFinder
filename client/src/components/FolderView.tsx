@@ -10,6 +10,7 @@ import { IoIosMenu } from "react-icons/io";
 import { CiGrid41 } from "react-icons/ci";
 import { LiaEdit } from "react-icons/lia";
 import axios from "../utils/axios";
+import RenameModal from "./RenameModal";
 
 interface Folder {
   _id: string;
@@ -38,6 +39,7 @@ const FolderView = () => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [renameTarget, setRenameTarget] = useState<{ id: string; originalName: string } | null>(null);
 
   const fetchData = async () => {
     const resFolders = await axios.get(`/folders`, {
@@ -86,6 +88,7 @@ const FolderView = () => {
       fetchData(); // refresh
     }
   };
+
 
   // CLOSE CONTEXT MENU on outside click:
   useEffect(() => {
@@ -192,14 +195,17 @@ const FolderView = () => {
                   <LiaEdit /> Download
                 </button>
                 <button
-                  onClick={() => {
-                    handleRenameFolder(f._id);
+                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setRenameTarget({ id: f._id, originalName: f.name });
                     setActiveMenu(null);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 cursor-pointer flex items-center gap-2"
                 >
                   <LiaEdit /> Rename
                 </button>
+
                 <button
                   onClick={() => {
                     handleDeleteFolder(f._id);
@@ -224,7 +230,7 @@ const FolderView = () => {
           columnClassName="my-masonry-grid_column"
         >
           {files.map((f) => (
-            <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)} />
+            <FileCard key={f._id} file={f} onPreview={() => setPreviewFile(f)}  />
           ))}
         </Masonry>
       ) : (
@@ -244,6 +250,20 @@ const FolderView = () => {
           ))}
         </div>
       )}
+
+      {renameTarget && (
+        <RenameModal
+          originalName={renameTarget.originalName}
+          existingNames={folders.map(f => f.name)}
+          onSave={async (newName) => {
+            await axios.put(`/folders/${renameTarget.id}`, { name: newName });
+            setRenameTarget(null);
+            fetchData();
+          }}
+          onClose={() => setRenameTarget(null)}
+        />
+      )}
+
 
     </div>
   );

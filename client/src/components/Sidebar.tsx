@@ -142,7 +142,7 @@ const Sidebar = () => {
 
 
   return (
-    <aside className="w-64 h-screen bg-white sticky top-0 left-0 z-20 flex flex-col pt-6">
+    <aside className="w-52 h-screen bg-white sticky top-0 left-0 z-20 flex flex-col pt-6">
 
       <div className="px-4 mb-6 flex items-center gap-2">
         <img className="w-16" src="/logo.png" alt="" />

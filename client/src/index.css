@@ -1,6 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Francois+One&display=swap');
-
 @import "tailwindcss";
+
 
 .my-masonry-grid {
     display: flex;
