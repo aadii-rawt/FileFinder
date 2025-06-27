@@ -32,25 +32,30 @@ const Signup = () => {
     }
   };
 
- const handleSignup = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    const response = await axios.post('http://localhost:5000/api/v1/auth/signup', formData);
+    try {
+      const res = await axios.post('http://localhost:5000/api/v1/auth/signup', formData);
+      const userData = res.data.user;
+      const token = res.data.token;
 
-    // ✅ Store token
-    localStorage.setItem('token', response.data.token);
 
-    setUser(response.data.user);
-    navigate('/');
-  } catch (error: any) {
-    alert(error.response?.data?.error || 'Signup failed');
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Save auth data to Electron Store
+      if (window?.electron?.ipcRenderer) {
+        window.electron.ipcRenderer.send("set-token", token);
+        window.electron.ipcRenderer.send("set-user-id", userData._id);
+      }
+      setUser(userData);
+      navigate("/selectfolders");
+    } catch (error: any) {
+      alert(error.response?.data?.error || 'Signup failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-4">
