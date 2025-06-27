@@ -9,6 +9,7 @@ import SigninLayout from './components/SigninLayout'
 import Login from './pages/Login'
 import VerifyOtp from './pages/VerifyOtp'
 import Signup from './pages/Signup'
+import SelectFolders from './pages/SelectFolders'
 
 function App() {
   const router = createBrowserRouter([
@@ -37,6 +38,10 @@ function App() {
           element: <Trash />
         }
       ]
+    },
+    {
+      path : "/selectfolders",
+      element : <SelectFolders />
     },
     {
       path: "/login",

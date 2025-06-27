@@ -28,35 +28,63 @@ const Login = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  useEffect(() => {
+    const fetch = async () => {
+      const token = await window.electron.ipcRenderer.invoke("get-token");
+      if (token) {
+        const res = await axios.get("http://localhost:5000/api/v1/auth/me", {
+          headers: {
+            Authorization: token,
+          },
+        });
+        console.log(res);
+        
 
-  try {
-    const { email, password } = formData;
-
-    if (!email || !password) {
-      setError("Please enter your details");
-      return;
+        setUser(res.data.user);
+      }
     }
 
-    const res = await axios.post("http://localhost:5000/api/v1/auth/login", formData);
+    fetch()
+  }, [])
 
-    const userData = res.data.user;
-    const token = res.data.token;
 
-    // ✅ Save token to localStorage
-    localStorage.setItem("token", token);
+  const handleLogin = async (e) => {
 
-    setUser(userData);
-    navigate("/");
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Invalid credentials");
-  } finally {
-    setLoading(false);
-  }
-};
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const { email, password } = formData;
+
+      if (!email || !password) {
+        setError("Please enter your details");
+        setLoading(false);
+        return;
+      }
+
+      const res = await axios.post("http://localhost:5000/api/v1/auth/login", formData);
+      const userData = res.data.user;
+      const token = res.data.token;
+
+
+      // ✅ Save auth data to Electron Store
+      if (window?.electron?.ipcRenderer) {
+        window.electron.ipcRenderer.send("set-token", token);
+        window.electron.ipcRenderer.send("set-user-id", userData._id);
+      }
+
+      // ✅ Save user to context
+      setUser(userData);
+
+      // ✅ Navigate to home
+      navigate("/selectfolders");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid credentials");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 

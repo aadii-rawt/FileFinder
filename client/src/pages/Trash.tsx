@@ -28,8 +28,6 @@ const Trash: React.FC = () => {
   const { user } = useAuthContext()
 
   const fetchTrash = async () => {
-    console.log("testing");
-    
     try {
       const res = await axios.post("/trash", {
         userId: user?._id, // 👈 pass userId in body

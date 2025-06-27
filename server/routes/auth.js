@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET // use env vars in production
 router.post('/signup', async (req, res) => {
   const { username, email, password } = req.body;
   console.log("reached");
-  
+
 
   try {
     const existing = await User.findOne({ email });
@@ -18,8 +18,8 @@ router.post('/signup', async (req, res) => {
     const user = new User({ username, email, password });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, username, email } });
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { _id: user._id, username, email } });
   } catch (err) {
     res.status(500).json({ error: 'Signup failed' });
   }
@@ -37,18 +37,17 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Incorrect password' });
     }
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, username: user.username, email } });
+    const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { _id: user._id, username: user.username, email } });
   } catch (err) {
     res.status(500).json({ error: 'Login failed' });
   }
 });
 
 router.get('/me', async (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  const token = authHeader
-
+  console.log('res');
+  
+  const authHeader = req.headers.authorization;const token = authHeader
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.id).select('-password'); // don't send password
@@ -61,7 +60,7 @@ router.get('/me', async (req, res) => {
   }
 });
 
-module.exports = router;
 
 
 module.exports = router;
+
