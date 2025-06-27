@@ -33734,7 +33734,7 @@ async function uploadFile(filePath, userId) {
 function watchFolders(folderPaths, userId) {
   if (watcher) watcher.close();
   watcher = chokidar.watch(folderPaths, {
-    ignored: /(^|[/\\])\../,
+    ignored: /(^|[/\\])\..*|\.crdownload$|\.part$|\.tmp$/,
     ignoreInitial: true,
     persistent: true,
     depth: 10,

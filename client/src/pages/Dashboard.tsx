@@ -16,7 +16,7 @@ function Dashboard() {
   const { folderId } = useParams();
   const [parentId, setParentId] = useState<string | null>(folderId || null);
   const [query, setQuery] = useState("");
-  const { previewFile, setPreviewFile, uploadQueue ,user} = useAuthContext();
+  const { previewFile, setPreviewFile, uploadQueue, user } = useAuthContext();
   const [syncFolderSet, setSyncFolderSet] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -25,24 +25,16 @@ function Dashboard() {
 
   // Check if sync folder is already set on first load
   useEffect(() => {
-    (async () => {
-      const folder = await window.electron.ipcRenderer.invoke("get-selected-folder");
+    const fetch = async () => {
+      // const folder = await window.electron.ipcRenderer.invoke("get-selected-folder");
       const token = await window.electron.ipcRenderer.invoke("get-token");
       const id = await window.electron.ipcRenderer.invoke("get-user-id");
       console.log(token);
       console.log(id);
-      
-      setSyncFolderSet(!!folder);
 
-      if (!folder) {
-        const selected = await (window as any).electron.ipcRenderer.invoke("select-folder");
-        if (!selected) {
-          alert("⚠️ Auto-upload folder not selected. You can set it later.");
-        } else {
-          alert("✅ Auto-upload folder selected: " + selected);
-        }
-      }
-    })();
+    }
+
+    fetch()
   }, []);
 
   return (

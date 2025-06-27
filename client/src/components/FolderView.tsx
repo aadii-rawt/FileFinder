@@ -40,6 +40,7 @@ const FolderView = () => {
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [renameTarget, setRenameTarget] = useState<{ id: string; originalName: string } | null>(null);
+  
   const userId = user?._id
   const fetchData = async () => {
     const resFolders = await axios.get(`/folders`, {

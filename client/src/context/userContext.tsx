@@ -36,9 +36,10 @@ const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
     const [previewFile, setPreviewFile] = useState<FileType | null>(null);
     const [uploadQueue, setUploadQueue] = useState<File[]>([]);
     useEffect(() => {
-        const token = localStorage.getItem("token");
-
         const fetchUser = async () => {
+            const token = await window.electron.ipcRenderer.invoke("get-token");
+            console.log(token);
+            
             if (!token) {
                 setLoading(false);
                 return;
@@ -46,9 +47,9 @@ const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
 
             try {
                 const res = await axios.get("http://localhost:5000/api/v1/auth/me", {
-                    headers: {
-                        Authorization: token,
-                    },
+                     headers: {
+                         Authorization: token,
+                     },
                 });
 
                 setUser(res.data.user);

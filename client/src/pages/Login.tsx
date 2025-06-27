@@ -66,7 +66,8 @@ const Login = () => {
       const res = await axios.post("http://localhost:5000/api/v1/auth/login", formData);
       const userData = res.data.user;
       const token = res.data.token;
-
+      console.log(res);
+      
 
       // ✅ Save auth data to Electron Store
       if (window?.electron?.ipcRenderer) {
@@ -77,7 +78,6 @@ const Login = () => {
       // ✅ Save user to context
       setUser(userData);
 
-      // ✅ Navigate to home
       navigate("/selectfolders");
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid credentials");
