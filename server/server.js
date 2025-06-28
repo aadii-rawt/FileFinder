@@ -16,8 +16,17 @@ app.use(express.json());
 
 
 app.use(cors({
-  origin: 'http://localhost:5173', // allow your React dev server
-  credentials: true               // allow cookies / auth headers
+  origin: function (origin, callback) {
+    if (
+      !origin ||                             // for Electron app (file:// or no origin)
+      origin === 'http://localhost:5173'     // for dev mode
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
 
 const authRoute = require("./routes/auth")
